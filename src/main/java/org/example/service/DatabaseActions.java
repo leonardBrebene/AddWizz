@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 public class DatabaseActions {
 
-    final public static String FILE_PATH = "src/main/java/org/example/downloads.txt";
+    final public static String FILE_PATH = "src/test/java/resources/downloads.txt";
 
     public List<DataEntry> getEntriesFromDownloads() {
         ObjectMapper objectMapper = new ObjectMapper();

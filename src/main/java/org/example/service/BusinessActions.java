@@ -3,10 +3,13 @@ package org.example.service;
 import org.example.repository.DataEntry;
 import org.example.repository.Opportunity;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class BusinessActions {
 
@@ -55,5 +58,38 @@ public class BusinessActions {
                         (oldValue, newValue) -> oldValue,
                         LinkedHashMap::new
                 ));
+    }
+
+
+    public Map<String, Set<Date>> getAllPodcastsToEventDates(List<DataEntry> podcastEvents) {
+
+        Map<String, Set<Date>> podcastToEventDates = new HashMap<>();
+        podcastEvents.stream()
+                .map(podcastEvent -> UtilsActions.getEpisodesDatesFromOpportunities(podcastEvent.getDownloadIdentifier().getShowId(), podcastEvent.getOpportunities()))
+                .forEach(datesByShow -> {
+                    if (Objects.isNull(podcastToEventDates.get(datesByShow.getKey()))) {
+                        podcastToEventDates.put(datesByShow.getKey(), datesByShow.getValue());
+                    } else {
+                        Set<Date> ceva = datesByShow.getValue();
+                        ceva.addAll(podcastToEventDates.get(datesByShow.getKey()));
+                        podcastToEventDates.put(datesByShow.getKey(), ceva);
+                    }
+                });
+        return podcastToEventDates;
+    }
+
+
+    public Map<String, List<LocalDateTime>> getAllPodcastsToSortedEventDates(Map<String, Set<Date>> podcastsToEventDates) {
+
+        return podcastsToEventDates.entrySet().stream()
+                .map(podcastToEventDates -> new AbstractMap.SimpleEntry<>(podcastToEventDates.getKey(), UtilsActions.getSortedDates(podcastToEventDates.getValue())))
+                .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+    }
+
+    public Map<String, List<LocalDateTime>> getWeeklyPodcastsToEventDates(Map<String, List<LocalDateTime>> podcastsToSortedEventDates) {
+
+        return podcastsToSortedEventDates.entrySet().stream()
+                .filter(e -> UtilsActions.isExactlySevenDaysBetweenDates(e.getValue()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 }
